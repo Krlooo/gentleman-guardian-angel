@@ -7,6 +7,7 @@
 # - claude: Anthropic Claude Code CLI
 # - gemini: Google Gemini CLI
 # - codex: OpenAI Codex CLI
+# - commandcode: Command Code CLI (optional :model)
 # - opencode: OpenCode CLI (optional :model)
 # - cursor: Cursor Agent CLI (optional :model)
 # - kilo: Kilo CLI (optional :model)
@@ -60,6 +61,16 @@ validate_provider() {
         echo "  npm install -g @openai/codex"
         echo "  # or"
         echo "  brew install --cask codex"
+        echo ""
+        return 1
+      fi
+      ;;
+    commandcode)
+      if ! get_commandcode_command >/dev/null; then
+        echo -e "${RED}❌ Command Code CLI not found${NC}"
+        echo ""
+        echo "Install Command Code CLI:"
+        echo "  npm install -g command-code"
         echo ""
         return 1
       fi
@@ -226,6 +237,7 @@ validate_provider() {
       echo "  - claude"
       echo "  - gemini"
       echo "  - codex"
+      echo "  - commandcode[:model]"
       echo "  - opencode"
       echo "  - cursor[:model]"
       echo "  - kilo[:model]"
@@ -260,6 +272,13 @@ execute_provider() {
       ;;
     codex)
       execute_codex "$prompt"
+      ;;
+    commandcode)
+      local model="${provider#*:}"
+      if [[ "$model" == "$provider" ]]; then
+        model=""
+      fi
+      execute_commandcode "$model" "$prompt"
       ;;
     opencode)
       local model="${provider#*:}"
@@ -366,6 +385,44 @@ execute_codex() {
 
   rm -f "$output_file"
   return "$codex_status"
+}
+
+get_commandcode_command() {
+  # Command Code installs `cmdc` on Windows because `cmd` is the system shell.
+  if command -v cmdc >/dev/null 2>&1; then
+    echo "cmdc"
+    return 0
+  fi
+
+  case "${OSTYPE:-}" in
+    msys*|cygwin*|win32*) return 1 ;;
+  esac
+
+  if command -v cmd >/dev/null 2>&1; then
+    echo "cmd"
+    return 0
+  fi
+  return 1
+}
+
+execute_commandcode() {
+  local model="$1"
+  local prompt="$2"
+  local commandcode_cmd
+
+  if ! commandcode_cmd=$(get_commandcode_command); then
+    echo "Error: Command Code CLI not found" >&2
+    return 1
+  fi
+
+  # Command Code prints the response and exits in -p mode. The prompt travels
+  # through stdin so it never appears in argv.
+  if [[ -n "$model" ]]; then
+    printf '%s' "$prompt" | "$commandcode_cmd" -p --model "$model" --output-format text 2>&1
+  else
+    printf '%s' "$prompt" | "$commandcode_cmd" -p --output-format text 2>&1
+  fi
+  return "${PIPESTATUS[1]}"
 }
 
 get_opencode_option_args() {
@@ -948,6 +1005,14 @@ get_provider_info() {
     codex)
       echo "OpenAI Codex CLI"
       ;;
+    commandcode)
+      local model="${provider#*:}"
+      if [[ "$model" == "$provider" || -z "$model" ]]; then
+        echo "Command Code CLI"
+      else
+        echo "Command Code CLI (model: $model)"
+      fi
+      ;;
     opencode)
       local model="${provider#*:}"
       local variant="${GGA_OPENCODE_VARIANT:-${OPENCODE_VARIANT:-}}"
@@ -1185,7 +1250,7 @@ execute_provider_with_timeout() {
   local result=0
 
   case "$base_provider" in
-    claude|gemini|codex|opencode|cursor|kilo|kiro)
+    claude|gemini|codex|commandcode|opencode|cursor|kilo|kiro)
       # Write prompt to temp file ONCE to avoid ARG_MAX limits.
       # This is critical for large PRs that generate prompts > 128KB-256KB.
       # Only CLI providers are handled here. API-based providers keep their
@@ -1239,6 +1304,31 @@ execute_provider_with_timeout() {
             cat "$codex_output_file"
           fi
           rm -f "$codex_output_file"
+          ;;
+        commandcode)
+          local model="${provider#*:}"
+          local commandcode_cmd
+          if [[ "$model" == "$provider" ]]; then
+            model=""
+          fi
+          if ! commandcode_cmd=$(get_commandcode_command); then
+            echo "Error: Command Code CLI not found" >&2
+            rm -f "$prompt_file"
+            trap - RETURN
+            return 1
+          fi
+          if [[ -n "$model" ]]; then
+            # Keep prompt content out of argv while passing command/model as
+            # positional shell arguments.
+            # shellcheck disable=SC2016
+            execute_with_timeout "$timeout" "Command Code" \
+              bash -c 'exec "$2" -p --model "$3" --output-format text < "$1"' _ "$prompt_file" "$commandcode_cmd" "$model"
+          else
+            # shellcheck disable=SC2016
+            execute_with_timeout "$timeout" "Command Code" \
+              bash -c 'exec "$2" -p --output-format text < "$1"' _ "$prompt_file" "$commandcode_cmd"
+          fi
+          result=$?
           ;;
         opencode)
           local model="${provider#*:}"

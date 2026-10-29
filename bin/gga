@@ -209,7 +209,7 @@ print_help() {
   echo ""
   echo -e "${BOLD}CONFIG OPTIONS:${NC}"
   echo "  PROVIDER           AI provider to use (required)"
-  echo "                     Values: claude, gemini, codex, opencode, cursor[:model], kilo[:model], kiro, ollama:<model>, lmstudio[:model], github:<model>, minimax[:model]"
+  echo "                     Values: claude, gemini, codex, commandcode[:model], opencode, cursor[:model], kilo[:model], kiro, ollama:<model>, lmstudio[:model], github:<model>, minimax[:model]"
   echo "  FILE_PATTERNS      File patterns to review (default: *)"
   echo "                     Example: *.ts,*.tsx,*.js,*.jsx"
   echo "  EXCLUDE_PATTERNS   Patterns to exclude from review"
@@ -403,11 +403,13 @@ cmd_init() {
 # https://github.com/your-org/gga
 
 # AI Provider (required)
-# Options: claude, gemini, codex, opencode, cursor[:model], kilo[:model], kiro, ollama:<model>, lmstudio[:model], github:<model>, minimax[:model]
+# Options: claude, gemini, codex, commandcode[:model], opencode, cursor[:model], kilo[:model], kiro, ollama:<model>, lmstudio[:model], github:<model>, minimax[:model]
 # Examples:
 #   PROVIDER="claude"
 #   PROVIDER="gemini"
 #   PROVIDER="codex"
+#   PROVIDER="commandcode"
+#   PROVIDER="commandcode:claude-sonnet-5-5"
 #   PROVIDER="opencode"
 #   PROVIDER="opencode:anthropic/claude-opus-4-5"
 #   PROVIDER="cursor"

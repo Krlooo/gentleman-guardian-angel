@@ -17,6 +17,7 @@ Use whichever AI CLI you have installed:
 | **Claude**        | `claude`           | `echo "prompt" \| claude --print` | [claude.ai/code](https://claude.ai/code)                                           |
 | **Gemini**        | `gemini`           | `echo "prompt" \| gemini`         | [github.com/google-gemini/gemini-cli](https://github.com/google-gemini/gemini-cli) |
 | **Codex**         | `codex`            | `codex exec "prompt"`             | `npm i -g @openai/codex`                                                           |
+| **Command Code**  | `commandcode[:model]` | `echo "prompt" \| cmdc -p --output-format text` | `npm install -g command-code`                              |
 | **OpenCode**      | `opencode`         | `echo "prompt" \| opencode run`   | [opencode.ai](https://opencode.ai)                                                 |
 | **Cursor Agent**  | `cursor[:model]`   | `echo "prompt" \| cursor-agent -p --output-format text` | [cursor.com](https://cursor.com)                                      |
 | **Kilo**          | `kilo[:model]`     | `echo "prompt" \| kilo run --auto` | `npm install -g @kilocode/cli`                                                     |
@@ -39,6 +40,12 @@ PROVIDER="gemini"
 
 # Use OpenAI Codex
 PROVIDER="codex"
+
+# Use Command Code with the default model
+PROVIDER="commandcode"
+
+# Use Command Code with specific model
+PROVIDER="commandcode:claude-sonnet-5-5"
 
 # Use OpenCode (uses default model)
 PROVIDER="opencode"
@@ -128,6 +135,20 @@ Google's Gemini CLI. Built into Antigravity IDE.
 # Test it works
 echo "Say hello" | gemini
 ```
+
+### Command Code
+
+Uses the Command Code CLI in non-interactive `-p` mode. GGA sends the review prompt through stdin to avoid ARG_MAX failures on large reviews.
+
+```bash
+# Install Command Code CLI
+npm install -g command-code
+
+# Test it works
+printf 'Say hello' | cmdc -p --output-format text
+```
+
+Command Code installs the `cmdc` binary on Windows, where `cmd` is the system shell. On Linux and macOS the binary is `cmd`; GGA resolves whichever is available.
 
 ### Cursor Agent
 

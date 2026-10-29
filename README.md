@@ -121,6 +121,7 @@ gga install             # Install git hook
 | **Claude** | `claude` | [claude.ai/code](https://claude.ai/code) |
 | **Gemini** | `gemini` | [gemini-cli](https://github.com/google-gemini/gemini-cli) |
 | **Codex** | `codex` | `npm i -g @openai/codex` |
+| **Command Code** | `commandcode[:model]` | `npm i -g command-code` |
 | **OpenCode** | `opencode` | [opencode.ai](https://opencode.ai) |
 | **Cursor Agent** | `cursor[:model]` | [cursor.com](https://cursor.com) |
 | **Kilo** | `kilo[:model]` | `npm install -g @kilocode/cli` |
